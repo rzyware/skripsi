@@ -23,6 +23,16 @@ rollback() {
     systemctl disable serversec-sys.service
     rm /etc/systemd/system/gre.service
     rm /etc/systemd/system/serversec-sys.service
+    echo "Terjadi kegagalan. Melakukan rollback..."
+    sudo apt-get remove --purge -y pfring-dkms nprobe ntopng n2disk cento 
+    if [ -f /etc/ntopng/ntopng.conf ]; then
+        sudo rm -f /etc/ntopng/ntopng.conf
+    fi
+    
+    if [ -f /etc/rsyslog.d/99-suricata.conf ]; then
+        sudo rm -f /etc/rsyslog.d/99-suricata.conf
+    fi
+    sudo systemctl restart rsyslog
     systemctl daemon-reload
     echo "Rollback selesai."
     exit 1
@@ -230,6 +240,48 @@ if systemctl is-active --quiet serversec-sys.service; then
 else
     echo "Gagal menjalankan service serversec-sys. Aborting."
 fi
+
+apt-get install software-properties-common wget && add-apt-repository -y universe
+wget https://packages.ntop.org/apt-stable/$(lsb_release -sr)/all/apt-ntop-stable.deb
+chown _apt apt-ntop-stable.deb
+apt install ./apt-ntop-stable.deb
+apt-get clean all && apt-get update && apt-get install -y pfring-dkms nprobe ntopng n2disk cento 
+rm apt-ntop-stable.deb
+
+DOCKER0_IP=$(ip addr show docker0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+
+if [ ! -d /etc/ntopng ]; then
+    sudo mkdir -p /etc/ntopng
+fi
+
+bash -c "cat > /etc/ntopng/ntopng.conf << EOL
+# ntopng configuration
+
+-i=syslog://$DOCKER0_IP:9999
+-i=tap0
+EOL"
+
+bash -c "echo '\$template suricata_raw,\"%msg%\\n\"
+
+module(load=\"imfile\")
+
+input(type=\"imfile\"
+      File=\"$SERVERSEC_DIR/SELKS/docker/containers-data/suricata/logs/eve.json\"
+      Tag=\"suricata-log\"
+      Severity=\"alert\"
+      Facility=\"local7\")
+
+if \$syslogtag == 'suricata-log' then {
+    action(type=\"omfwd\"
+          Target=\"$DOCKER0_IP\"
+          Port=\"9999\"
+          Protocol=\"tcp\"
+          Template=\"suricata_raw\")
+}
+' > /etc/rsyslog.d/99-suricata.conf"
+
+sudo systemctl restart rsyslog
+sudo systemctl restart ntopng
 
 echo "Instalasi serversec selesai. Semua service sudah dijalankan."
 
