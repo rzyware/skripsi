@@ -35,7 +35,7 @@ Setelah proses installer berhasil, service dapat dicek melalui `systemctl status
 ## Akses Scirius & ntopng
 Setelah melakukan proses instalasi, untuk mengakses Scirius dapat dilakukan dengan memasukkan IP serversec dengan HTTPS di web browser. Untuk mengakses ntopng, dapat dilakukan dengan cara yang sama akan tetapi menggunakan port `3000`.
 
-# Bot Whatsapp
+# Bot WhatsApp
 Untuk melihat perintah yang dapat diberikan ke bot alert, dapat mengirimkan perintah `.help` ke bot.
 
 **Catatan:** Bot adalah WhatsApp yang diautentikasi menggunakan QR. Nomor yang dimasukkan saat proses instalasi di Serversec adalah nomer yang memiliki izin untuk mengakses ke perintah yang terdapat pada bot.
