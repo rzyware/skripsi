@@ -1,0 +1,17 @@
+{
+    "name": "suricata-alert",
+    "version": "1.0.0",
+    "description": "",
+    "main": "checker.js",
+    "scripts": {
+        "start": "node checker.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "dotenv": "^16.0.3",
+        "puppeteer": "^22.1.0",
+        "qrcode-terminal": "^0.12.0",
+        "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js#webpack-exodus"
+    }
+}
